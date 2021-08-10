@@ -17,9 +17,7 @@ var todayCmd = &cobra.Command{
 	Short: "Get all scrape all articles today",
 	Long: "This will scrape japantimes.jp for all articles released today.",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println(args)
 		fmt.Println("This will scrape everything for today")
-
 		scraper.ScrapeToday()
 	},
 }

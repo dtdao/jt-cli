@@ -1,9 +1,11 @@
 package cmd
 
 import (
+	"github.com/schollz/progressbar/v3"
 	"github.com/spf13/cobra"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 func init() {
@@ -20,18 +22,26 @@ var clearCmd = &cobra.Command{
 		through and scrape the articles again.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		d, err := os.Open(Articles)
+
 		if err != nil {
 			cmd.ErrOrStderr()
 		}
 
 		defer d.Close()
 		names, err := d.Readdirnames(-1)
+		bar := progressbar.DefaultBytes(int64(len(names)), "Deleting")
 		if err != nil {
 			cmd.ErrOrStderr()
 		}
 
+		if len(names) == 0 {
+			return
+		}
+
 		for _, name := range names {
 			err = os.RemoveAll(filepath.Join(Articles, name))
+			bar.Add(1)
+			time.Sleep(40*time.Millisecond)
 			if err != nil {
 				cmd.ErrOrStderr()
 			}
