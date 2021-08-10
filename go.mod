@@ -9,4 +9,5 @@ require (
 	github.com/spf13/viper v1.8.1 // indirect
 	golang.org/x/sys v0.0.0-20210806184541-e5e7981a1069 // indirect
 	golang.org/x/text v0.3.6 // indirect
+	github.com/gocolly/colly/v2 v2.1.0
 )

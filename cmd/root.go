@@ -18,10 +18,15 @@ package cmd
 import (
 	"fmt"
 	"os"
+
 	"github.com/spf13/cobra"
 
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
+)
+
+const (
+	Articles = "./articles"
 )
 
 var cfgFile string
@@ -29,13 +34,19 @@ var cfgFile string
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "jt-cli",
-	Short: "A brief description of your application",
-	Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "This is a Japan times scraper cli tool",
+	Long: `The main goal of this project is to build a cli tool to scrape
+	articles form the japantimes.jp website.  
+	
+	Why would I want to build such a tool?  
+	1 - Japantimes has a paywall.  A very weak paywall.  While the "paywall" can be disabled 
+	with simple html/scss manipulation.  It does become a chore to do in a browser developer tools.
+	
+	2. This project is suppose to build on a chrome/firefox extension that ive worked on previously.
+	That extension does work by doing what was mention in point number 1 by manipulating the html/scss 
+	and removing the "paywall".
+	
+	3. I want to continue to learn and build more tools/apps using GoLang.`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	// Run: func(cmd *cobra.Command, args []string) { },
