@@ -54,8 +54,9 @@ func searcher(input string, index int) bool {
 }
 
 func displayArticle(name string) {
-
+	var article Article
 	file := fmt.Sprintf("%s/%s", articleFolder, name)
+
 	jsonFile, err := os.Open(file)
 	if err != nil {
 		log.Fatal(err)
@@ -66,7 +67,7 @@ func displayArticle(name string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	var article Article
+
 	err = json.Unmarshal(byteValue, &article)
 	if err != nil {
 		log.Fatal(err)

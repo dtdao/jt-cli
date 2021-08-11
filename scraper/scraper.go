@@ -17,7 +17,7 @@ const (
 )
 
 type Article struct {
-	Title, Content string
+	Title, Content, Credit, Writer string
 }
 
 func ScrapeToday() {
@@ -39,9 +39,14 @@ func ScrapeToday() {
 		e.Request.Visit(link)
 	})
 
+	c.OnHTML("a.wrapper-link", func(e *colly.HTMLElement) {
+		link := e.Attr("href")
+		e.Request.Visit(link)
+	})
+
 	c.OnHTML("div.main", func(e *colly.HTMLElement) {
 		makeArticle(e)
-		bar.Add(10000)
+		bar.Add(1)
 	})
 
 	c.Visit(japanTimes)
@@ -94,6 +99,8 @@ func progress() *progressbar.ProgressBar {
 
 func makeArticle(e *colly.HTMLElement) {
 	title := e.ChildText("h1")
+	credit := e.ChildText("p.credit")
+	writer := e.ChildText("h5.writer")
 	r, size := utf8.DecodeLastRuneInString(title)
 	if r == utf8.RuneError && (size == 0 || size == 1) {
 		size = 0
@@ -106,6 +113,8 @@ func makeArticle(e *colly.HTMLElement) {
 	data := Article{
 		Title:   title,
 		Content: article,
+		Credit: credit,
+		Writer: writer,
 	}
 	jsonFileName := fmt.Sprintf("%s.json", title)
 	file, _ := json.MarshalIndent(data, "", "")
