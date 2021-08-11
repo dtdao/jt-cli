@@ -40,33 +40,8 @@ func ScrapeToday() {
 	})
 
 	c.OnHTML("div.main", func(e *colly.HTMLElement) {
-		title := e.ChildText("h1")
-		r, size := utf8.DecodeLastRuneInString(title)
-		if r == utf8.RuneError && (size == 0 || size == 1) {
-			size = 0
-		}
-		if title[len(title)-1:] == "." {
-			title = title[:len(title)-size]
-		}
-
-		article := e.ChildText(`div[id="jtarticle"] p`)
-		data := Article{
-			Title:   title,
-			Content: article,
-		}
-		jsonFileName := fmt.Sprintf("%s.json", title)
-		file, _ := json.MarshalIndent(data, "", "")
-
+		makeArticle(e)
 		bar.Add(10000)
-
-		//f, err := os.Create(filePath)
-		//if err != nil {
-		//	panic(err)
-		//}
-
-		filePath := fmt.Sprintf("./articles/%s", jsonFileName)
-		_ = ioutil.WriteFile(filePath, file, 0644)
-		//f.WriteString(article)
 	})
 
 	c.Visit(japanTimes)
@@ -105,26 +80,8 @@ func ScrapeDate(date string) {
 	//})
 
 	c.OnHTML("div.main", func(e *colly.HTMLElement) {
-		title := e.ChildText("h1")
-		r, size := utf8.DecodeLastRuneInString(title)
-		if r == utf8.RuneError && (size == 0 || size == 1) {
-			size = 0
-		}
-		if title[len(title)-1:] == "." {
-			title = title[:len(title)-size]
-		}
-
-		article := e.ChildText(`div[id="jtarticle"] p`)
-		fileName := fmt.Sprintf("%s.txt", title)
-		filePath := fmt.Sprintf("./articles/%s", fileName)
+		makeArticle(e)
 		bar.Add(10000)
-
-		f, err := os.Create(filePath)
-		if err != nil {
-			panic(err)
-		}
-
-		f.WriteString(article)
 	})
 
 	c.Visit(japanTimes + "/news/" + date)
@@ -133,4 +90,26 @@ func ScrapeDate(date string) {
 func progress() *progressbar.ProgressBar {
 	bar := progressbar.DefaultBytes(-1, "Scrapping...")
 	return bar
+}
+
+func makeArticle(e *colly.HTMLElement) {
+	title := e.ChildText("h1")
+	r, size := utf8.DecodeLastRuneInString(title)
+	if r == utf8.RuneError && (size == 0 || size == 1) {
+		size = 0
+	}
+	if title[len(title)-1:] == "." {
+		title = title[:len(title)-size]
+	}
+
+	article := e.ChildText(`div[id="jtarticle"] p`)
+	data := Article{
+		Title:   title,
+		Content: article,
+	}
+	jsonFileName := fmt.Sprintf("%s.json", title)
+	file, _ := json.MarshalIndent(data, "", "")
+
+	filePath := fmt.Sprintf("./articles/%s", jsonFileName)
+	_ = ioutil.WriteFile(filePath, file, 0644)
 }
