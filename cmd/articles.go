@@ -28,4 +28,5 @@ var articlesCmd = &cobra.Command{
 			fmt.Println(file.Name())
 		}
 	},
+	Args: cobra.NoArgs,
 }

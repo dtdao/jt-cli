@@ -20,7 +20,7 @@ type Article struct {
 	Title, Content, Credit, Writer string
 }
 
-func ScrapeToday() {
+func ScrapeToday() error {
 	if _, err := os.Stat("articles"); os.IsNotExist(err) {
 		if err := os.Mkdir("articles", 0755); err != nil {
 			log.Fatal(err)
@@ -30,29 +30,62 @@ func ScrapeToday() {
 	bar := progress()
 
 	c := colly.NewCollector(
-		colly.AllowedDomains("www.japantimes.co.jp"),
-		colly.MaxDepth(2),
+		colly.AllowedDomains("japantimes.co.jp", "www.japantimes.co.jp"),
+		colly.MaxDepth(1),
 	)
 
-	c.OnHTML("li.index-loop-article", func(e *colly.HTMLElement) {
-		link := e.ChildAttr("a", "href")
-		e.Request.Visit(link)
-	})
+	articleColector := c.Clone()
 
-	c.OnHTML("a.wrapper-link", func(e *colly.HTMLElement) {
+	// Lead stories
+	c.OnHTML("div.lead-stories > a.wrapper-link", func(e *colly.HTMLElement) {
 		link := e.Attr("href")
-		e.Request.Visit(link)
+		link = e.Request.AbsoluteURL(link)
+		articleColector.Visit(link)
 	})
 
-	c.OnHTML("div.main", func(e *colly.HTMLElement) {
+	// Top stories
+	c.OnHTML("div.top-stories > a.wrapper-link.top-story", func(e *colly.HTMLElement) {
+		link := e.Attr("href")
+		link = e.Request.AbsoluteURL(link)
+		articleColector.Visit(link)
+	})
+
+	// Editor picks
+	c.OnHTML("div.editors-picks > a.wrapper-link", func(e *colly.HTMLElement) {
+		link := e.Attr("href")
+		link = e.Request.AbsoluteURL(link)
+		articleColector.Visit(link)
+	})
+
+	/**
+	  Japantimes <div.main-content> is separated into different <section>
+	  Each section consist of a feature article <div.featured>
+	  A subsection list section of articles that relates to that section <ul
+	*/
+	c.OnHTML("div.featured > > a.wrapper-link", func(e *colly.HTMLElement) {
+		link := e.Attr("href")
+		link = e.Request.AbsoluteURL(link)
+		articleColector.Visit(link)
+	})
+
+	c.OnHTML("ul.module_articles > li.index-loop-article > a", func(e *colly.HTMLElement) {
+		link := e.Attr("href")
+		link = e.Request.AbsoluteURL(link)
+		articleColector.Visit(link)
+	})
+	/**
+	 End of section collector.
+	 */
+
+	articleColector.OnHTML("div.main", func(e *colly.HTMLElement) {
 		makeArticle(e)
 		bar.Add(1)
 	})
 
-	c.Visit(japanTimes)
+	return c.Visit(japanTimes)
 }
 
-func ScrapeDate(date string) {
+func ScrapeDate(date string) error {
 	if _, err := os.Stat("articles"); os.IsNotExist(err) {
 		if err := os.Mkdir("articles", 0755); err != nil {
 			panic(err)
@@ -73,23 +106,12 @@ func ScrapeDate(date string) {
 		}
 	})
 
-	//c.OnHTML("article.story.archive_story", func(e *colly.HTMLElement) {
-	//	links := e.ChildAttrs("a", "href")
-	//	for _, link := range links {
-	//		if strings.Contains(link, date) {
-	//			e.Request.Visit(link)
-	//			fmt.Println(link)
-	//		}
-	//
-	//	}
-	//})
-
 	c.OnHTML("div.main", func(e *colly.HTMLElement) {
 		makeArticle(e)
 		bar.Add(10000)
 	})
 
-	c.Visit(japanTimes + "/news/" + date)
+	return c.Visit(japanTimes + "/news/" + date)
 }
 
 func progress() *progressbar.ProgressBar {
@@ -113,8 +135,8 @@ func makeArticle(e *colly.HTMLElement) {
 	data := Article{
 		Title:   title,
 		Content: article,
-		Credit: credit,
-		Writer: writer,
+		Credit:  credit,
+		Writer:  writer,
 	}
 	jsonFileName := fmt.Sprintf("%s.json", title)
 	file, _ := json.MarshalIndent(data, "", "")

@@ -17,4 +17,5 @@ var readerCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		reader.Reader()
 	},
+	Args: cobra.NoArgs,
 }

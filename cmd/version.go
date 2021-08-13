@@ -18,4 +18,5 @@ var versionCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("jt-cli version 1.0")
 	},
+	Args: cobra.NoArgs,
 }

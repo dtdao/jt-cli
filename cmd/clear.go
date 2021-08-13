@@ -12,8 +12,6 @@ func init() {
 	rootCmd.AddCommand(clearCmd)
 }
 
-
-
 var clearCmd = &cobra.Command{
 	Use:   "clear",
 	Short: "Clear out all scrapped articles",
@@ -41,10 +39,11 @@ var clearCmd = &cobra.Command{
 		for _, name := range names {
 			err = os.RemoveAll(filepath.Join(Articles, name))
 			bar.Add(1)
-			time.Sleep(40*time.Millisecond)
+			time.Sleep(40 * time.Millisecond)
 			if err != nil {
 				cmd.ErrOrStderr()
 			}
 		}
 	},
+	Args: cobra.NoArgs,
 }

@@ -20,4 +20,5 @@ var todayCmd = &cobra.Command{
 		fmt.Println("This will scrape everything for today")
 		scraper.ScrapeToday()
 	},
+	Args: cobra.NoArgs,
 }
