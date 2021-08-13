@@ -16,7 +16,7 @@ const (
 	japanTimes = "https://www.japantimes.co.jp"
 )
 
-type Article struct {
+type article struct {
 	Title, Content, Credit, Writer string
 }
 
@@ -82,6 +82,8 @@ func ScrapeToday() error {
 		bar.Add(1)
 	})
 
+	onRequest(articleColector, bar)
+
 	return c.Visit(japanTimes)
 }
 
@@ -96,20 +98,23 @@ func ScrapeDate(date string) error {
 
 	c := colly.NewCollector(
 		colly.AllowedDomains(),
-		colly.MaxDepth(2),
+		colly.MaxDepth(1),
 	)
-	c.OnHTML("article.story.archive_story", func(e *colly.HTMLElement) {
-		link := e.ChildAttr("a", "href")
 
+	articleCollector := c.Clone()
+
+	c.OnHTML("article.story.archive_story > div.content_col > header > hgroup > h1 > a", func(e *colly.HTMLElement) {
+		link := e.Attr("href")
 		if strings.Contains(link, date) {
-			e.Request.Visit(link)
+			articleCollector.Visit(link)
 		}
 	})
 
-	c.OnHTML("div.main", func(e *colly.HTMLElement) {
+	articleCollector.OnHTML("div.main", func(e *colly.HTMLElement) {
 		makeArticle(e)
-		bar.Add(10000)
 	})
+
+	onRequest(articleCollector, bar)
 
 	return c.Visit(japanTimes + "/news/" + date)
 }
@@ -117,6 +122,14 @@ func ScrapeDate(date string) error {
 func progress() *progressbar.ProgressBar {
 	bar := progressbar.DefaultBytes(-1, "Scrapping...")
 	return bar
+}
+
+func onRequest(c *colly.Collector, bar *progressbar.ProgressBar){
+	c.OnRequest(func(r *colly.Request){
+		message := fmt.Sprintf("Scrapping..%s", r.URL.String())
+		bar.Add(1)
+		bar.Describe(message)
+	})
 }
 
 func makeArticle(e *colly.HTMLElement) {
@@ -131,10 +144,10 @@ func makeArticle(e *colly.HTMLElement) {
 		title = title[:len(title)-size]
 	}
 
-	article := e.ChildText(`div[id="jtarticle"] p`)
-	data := Article{
+	content := e.ChildText("#jtarticle > p")
+	data := article{
 		Title:   title,
-		Content: article,
+		Content: content,
 		Credit:  credit,
 		Writer:  writer,
 	}
