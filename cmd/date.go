@@ -5,6 +5,7 @@ import (
 	"github.com/spf13/cobra"
 	"jt-cli/scraper"
 	"log"
+	"time"
 )
 
 func init() {
@@ -25,11 +26,11 @@ var dateCmd = &cobra.Command{
 				log.Fatal(err)
 			}
 		}
-		var date = args[0]
-		err := scraper.ScrapeDate(date)
+		date, err := time.Parse("2006/01/02", args[0])
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal("Invalid date")
 		}
-		return nil
+		formattedTime := date.Format("2006/01/02")
+		return scraper.ScrapeDate(formattedTime)
 	},
 }
