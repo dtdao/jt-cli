@@ -17,7 +17,7 @@ const (
 )
 
 type article struct {
-	Title, Content, Credit, Writer string
+	Title, Content, Credit, Writer, Url string
 }
 
 func ScrapeToday() error {
@@ -74,8 +74,8 @@ func ScrapeToday() error {
 		articleColector.Visit(link)
 	})
 	/**
-	 End of section collector.
-	 */
+	End of section collector.
+	*/
 
 	articleColector.OnHTML("div.main", func(e *colly.HTMLElement) {
 		makeArticle(e)
@@ -120,12 +120,16 @@ func ScrapeDate(date string) error {
 }
 
 func progress() *progressbar.ProgressBar {
-	bar := progressbar.DefaultBytes(-1, "Scrapping...")
+	bar := progressbar.NewOptions(-1,
+		progressbar.OptionSetDescription("Scrapping"),
+		progressbar.OptionShowBytes(false),
+		progressbar.OptionSpinnerType(35),
+		progressbar.OptionClearOnFinish())
 	return bar
 }
 
-func onRequest(c *colly.Collector, bar *progressbar.ProgressBar){
-	c.OnRequest(func(r *colly.Request){
+func onRequest(c *colly.Collector, bar *progressbar.ProgressBar) {
+	c.OnRequest(func(r *colly.Request) {
 		message := fmt.Sprintf("Scrapping..%s", r.URL.String())
 		bar.Add(1)
 		bar.Describe(message)
@@ -136,6 +140,8 @@ func makeArticle(e *colly.HTMLElement) {
 	title := e.ChildText("h1")
 	credit := e.ChildText("p.credit")
 	writer := e.ChildText("h5.writer")
+	url := fmt.Sprintf("%s%s", e.Request.URL.Host, e.Request.URL.Path)
+
 	r, size := utf8.DecodeLastRuneInString(title)
 	if r == utf8.RuneError && (size == 0 || size == 1) {
 		size = 0
@@ -150,6 +156,7 @@ func makeArticle(e *colly.HTMLElement) {
 		Content: content,
 		Credit:  credit,
 		Writer:  writer,
+		Url: url,
 	}
 	jsonFileName := fmt.Sprintf("%s.json", title)
 	file, _ := json.MarshalIndent(data, "", "")

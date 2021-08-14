@@ -27,7 +27,7 @@ var clearCmd = &cobra.Command{
 
 		defer d.Close()
 		names, err := d.Readdirnames(-1)
-		bar := progressbar.DefaultBytes(int64(len(names)), "Deleting")
+		bar := progressbar.Default(int64(len(names)), "Deleting")
 		if err != nil {
 			cmd.ErrOrStderr()
 		}

@@ -21,10 +21,7 @@ var dateCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
 			fmt.Println("Scrapping today")
-			err := scraper.ScrapeToday()
-			if err != nil {
-				log.Fatal(err)
-			}
+			return  scraper.ScrapeToday()
 		}
 		date, err := time.Parse("2006/01/02", args[0])
 		if err != nil {
