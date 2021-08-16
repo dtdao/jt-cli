@@ -38,23 +38,17 @@ func ScrapeToday() error {
 
 	// Lead stories
 	c.OnHTML("div.lead-stories > a.wrapper-link", func(e *colly.HTMLElement) {
-		link := e.Attr("href")
-		link = e.Request.AbsoluteURL(link)
-		articleColector.Visit(link)
+		visitContent(articleColector, e)
 	})
 
 	// Top stories
 	c.OnHTML("div.top-stories > a.wrapper-link.top-story", func(e *colly.HTMLElement) {
-		link := e.Attr("href")
-		link = e.Request.AbsoluteURL(link)
-		articleColector.Visit(link)
+		visitContent(articleColector, e)
 	})
 
 	// Editor picks
 	c.OnHTML("div.editors-picks > a.wrapper-link", func(e *colly.HTMLElement) {
-		link := e.Attr("href")
-		link = e.Request.AbsoluteURL(link)
-		articleColector.Visit(link)
+		visitContent(articleColector, e)
 	})
 
 	/**
@@ -63,15 +57,12 @@ func ScrapeToday() error {
 	  A subsection list section of articles that relates to that section <ul
 	*/
 	c.OnHTML("div.featured > > a.wrapper-link", func(e *colly.HTMLElement) {
-		link := e.Attr("href")
-		link = e.Request.AbsoluteURL(link)
-		articleColector.Visit(link)
+		visitContent(articleColector, e)
+
 	})
 
 	c.OnHTML("ul.module_articles > li.index-loop-article > a", func(e *colly.HTMLElement) {
-		link := e.Attr("href")
-		link = e.Request.AbsoluteURL(link)
-		articleColector.Visit(link)
+		visitContent(articleColector, e)
 	})
 	/**
 	End of section collector.
@@ -97,7 +88,7 @@ func ScrapeDate(date string) error {
 	bar := progress()
 
 	c := colly.NewCollector(
-		colly.AllowedDomains(),
+		colly.AllowedDomains("japantimes.co.jp", "www.japantimes.co.jp"),
 		colly.MaxDepth(1),
 	)
 
@@ -136,6 +127,13 @@ func onRequest(c *colly.Collector, bar *progressbar.ProgressBar) {
 	})
 }
 
+func visitContent(collector *colly.Collector, e *colly.HTMLElement) {
+	link := e.Attr("href")
+	link = e.Request.AbsoluteURL(link)
+	collector.Visit(link)
+
+}
+
 func makeArticle(e *colly.HTMLElement) {
 	title := e.ChildText("h1")
 	credit := e.ChildText("p.credit")
@@ -156,11 +154,27 @@ func makeArticle(e *colly.HTMLElement) {
 		Content: content,
 		Credit:  credit,
 		Writer:  writer,
-		Url: url,
+		Url:     url,
 	}
 	jsonFileName := fmt.Sprintf("%s.json", title)
-	file, _ := json.MarshalIndent(data, "", "")
+	fileExist, err := doesFileExist(jsonFileName)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if !fileExist {
+		fmt.Println(fileExist, jsonFileName)
+		file, _ := json.MarshalIndent(data, "", "")
 
-	filePath := fmt.Sprintf("./articles/%s", jsonFileName)
-	_ = ioutil.WriteFile(filePath, file, 0644)
+		filePath := fmt.Sprintf("./articles/%s", jsonFileName)
+		_ = ioutil.WriteFile(filePath, file, 0644)
+	}
+
+}
+
+func doesFileExist(file string) (bool, error) {
+	filePath := fmt.Sprintf("./articles/%s", file)
+	if _, err := os.Stat(filePath); err == nil {
+		return true, nil
+	}
+	return false, nil
 }

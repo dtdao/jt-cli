@@ -19,11 +19,13 @@ var dateCmd = &cobra.Command{
     value in YYYY/MM/DD format and get all articles for that date.`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if len(args) == 0 {
-			fmt.Println("Scrapping today")
-			return  scraper.ScrapeToday()
-		}
+		loc, _ := time.LoadLocation("UTC")
 		date, err := time.Parse("2006/01/02", args[0])
+		today := time.Now().In(loc)
+		if len(args) == 0 || date.After(today) {
+			fmt.Println("Scrapping today")
+			return scraper.ScrapeToday()
+		}
 		if err != nil {
 			log.Fatal("Invalid date")
 		}
