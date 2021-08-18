@@ -16,8 +16,8 @@ const (
 	japanTimes = "https://www.japantimes.co.jp"
 )
 
-type article struct {
-	Title, Content, Credit, Writer, Url string
+type Article struct {
+	Title, Content, Credit, Writer, Url, Date string
 }
 
 func ScrapeToday() error {
@@ -138,6 +138,7 @@ func makeArticle(e *colly.HTMLElement) {
 	title := e.ChildText("h1")
 	credit := e.ChildText("p.credit")
 	writer := e.ChildText("h5.writer")
+	date := e.ChildAttr("time", "datetime")
 	url := fmt.Sprintf("%s%s", e.Request.URL.Host, e.Request.URL.Path)
 
 	r, size := utf8.DecodeLastRuneInString(title)
@@ -149,12 +150,13 @@ func makeArticle(e *colly.HTMLElement) {
 	}
 
 	content := e.ChildText("#jtarticle > p")
-	data := article{
+	data := Article{
 		Title:   title,
 		Content: content,
 		Credit:  credit,
 		Writer:  writer,
 		Url:     url,
+		Date: date,
 	}
 	jsonFileName := fmt.Sprintf("%s.json", title)
 	fileExist, err := doesFileExist(jsonFileName)
@@ -162,7 +164,6 @@ func makeArticle(e *colly.HTMLElement) {
 		log.Fatal(err)
 	}
 	if !fileExist {
-		fmt.Println(fileExist, jsonFileName)
 		file, _ := json.MarshalIndent(data, "", "")
 
 		filePath := fmt.Sprintf("./articles/%s", jsonFileName)
