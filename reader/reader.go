@@ -10,12 +10,16 @@ import (
 	"strings"
 )
 
-var articles []string
+var articles []Article
 var articleFolder = "./articles"
 
 type Article struct {
-	Title string `json:"title"`
-	Content string `json:"content"`
+	Title string `json:"Title"`
+	Content string `json:"Content"`
+	Credit string `json:"Credit"`
+	Writer string `json:"Writer"`
+	Url string `json:"Url"`
+	Date string `json:"Date"`
 }
 
 func Reader() {
@@ -25,30 +29,61 @@ func Reader() {
 	}
 
 	for _, file := range files {
-		articles = append(articles, file.Name())
+		fileDirectory := fmt.Sprintf("./articles/%s", file.Name())
+
+		jsonFile, err := os.Open(fileDirectory)
+		defer jsonFile.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		jsonData, err := ioutil.ReadAll(jsonFile)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		article := Article{}
+		err = json.Unmarshal(jsonData, &article)
+
+		articles = append(articles, article)
+		//articles = append(articles, file.Name())
+	}
+
+	templates := &promptui.SelectTemplates{
+		Label: "{{ . }}?",
+		Active:   "\U0000261E{{ .Title | cyan }} ({{ .Date | red }})",
+		Inactive: "  {{ .Title | cyan }} ({{ .Date | red }})",
+		Selected: "\U0000261E{{ .Title | red | cyan }}",
+		Details:`
+--------- Article Details ----------
+{{ "Name:" | faint }}	{{ .Title }}
+{{ "Date:" | faint }}	{{ .Date }}
+{{ "Url:" | faint }}	{{ .Url }}`,
 	}
 
 	prompt := promptui.Select{
-		Label:    "Select articles",
+		Label:    "Articles",
 		Items:    articles,
 		Searcher: searcher,
 		Size:     20,
+		Templates: templates,
 	}
 
-	_, result, err := prompt.Run()
+	index, _, err := prompt.Run()
 
 	if err != nil {
 		fmt.Printf("Prompt failed %v\n", err)
 		return
 	}
 
-	fmt.Printf("You choose %q\n", result)
-	displayArticle(result)
+	fileName := fmt.Sprintf("%s.json", articles[index].Title)
+	displayArticle(fileName)
 }
 
+// TODO update searcher for date
 func searcher(input string, index int) bool {
 	article := articles[index]
-	name := strings.Replace(strings.ToLower(article), " ", "", -1)
+	name := strings.Replace(strings.ToLower(article.Title), " ", "", -1)
 	input = strings.Replace(strings.ToLower(input), " ", "", -1)
 	return strings.Contains(name, input)
 }
