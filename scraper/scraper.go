@@ -20,19 +20,33 @@ type Article struct {
 	Title, Content, Credit, Writer, Url, Date string
 }
 
-func ScrapeToday() error {
+func init() {
+	if err := makeFile(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func makeFile() error {
 	if _, err := os.Stat("articles"); os.IsNotExist(err) {
 		if err := os.Mkdir("articles", 0755); err != nil {
-			log.Fatal(err)
+			return err
 		}
 	}
+	return nil
+}
 
-	bar := progress()
-
+func makeCollector() (collector *colly.Collector) {
 	c := colly.NewCollector(
 		colly.AllowedDomains("japantimes.co.jp", "www.japantimes.co.jp"),
 		colly.MaxDepth(1),
 	)
+	return c
+}
+
+func ScrapeToday() error {
+	bar := progress()
+
+	c := makeCollector()
 
 	articleColector := c.Clone()
 
@@ -78,19 +92,24 @@ func ScrapeToday() error {
 	return c.Visit(japanTimes)
 }
 
-func ScrapeDate(date string) error {
-	if _, err := os.Stat("articles"); os.IsNotExist(err) {
-		if err := os.Mkdir("articles", 0755); err != nil {
-			panic(err)
-		}
-	}
+func ScrapeUrl(url string) error {
+	bar := progress()
+	articleCollector := makeCollector()
 
+	articleCollector.OnHTML("div.main", func(e *colly.HTMLElement) {
+		makeArticle(e)
+	})
+
+	onRequest(articleCollector, bar)
+	if err := articleCollector.Visit(url); err != nil {
+		return err
+	}
+	return nil
+}
+func ScrapeDate(date string) error {
 	bar := progress()
 
-	c := colly.NewCollector(
-		colly.AllowedDomains("japantimes.co.jp", "www.japantimes.co.jp"),
-		colly.MaxDepth(1),
-	)
+	c := makeCollector()
 
 	articleCollector := c.Clone()
 
@@ -156,7 +175,7 @@ func makeArticle(e *colly.HTMLElement) {
 		Credit:  credit,
 		Writer:  writer,
 		Url:     url,
-		Date: date,
+		Date:    date,
 	}
 	jsonFileName := fmt.Sprintf("%s.json", title)
 	fileExist, err := doesFileExist(jsonFileName)
