@@ -16,8 +16,13 @@ const (
 	japanTimes = "https://www.japantimes.co.jp"
 )
 
+type Images struct {
+	Caption, Url string
+}
+
 type Article struct {
 	Title, Content, Credit, Writer, Url, Date string
+	Images                                    []Images
 }
 
 func init() {
@@ -106,6 +111,7 @@ func ScrapeUrl(url string) error {
 	}
 	return nil
 }
+
 func ScrapeDate(date string) error {
 	bar := progress()
 
@@ -154,10 +160,23 @@ func visitContent(collector *colly.Collector, e *colly.HTMLElement) {
 }
 
 func makeArticle(e *colly.HTMLElement) {
+	var images []Images
 	title := e.ChildText("h1")
 	credit := e.ChildText("p.credit")
 	writer := e.ChildText("h5.writer")
 	date := e.ChildAttr("time", "datetime")
+	e.ForEach("ul.slides > li > figure .fresco", func(_ int, el *colly.HTMLElement) {
+		if el.Attr("data-fresco-group") == "attachment-group" {
+			imageUrl := el.Attr("href")
+			caption := el.Attr("data-fresco-caption")
+			image := Images{
+				caption,
+				imageUrl,
+			}
+			images = append(images, image)
+		}
+	})
+
 	url := fmt.Sprintf("%s%s", e.Request.URL.Host, e.Request.URL.Path)
 
 	r, size := utf8.DecodeLastRuneInString(title)
@@ -176,6 +195,7 @@ func makeArticle(e *colly.HTMLElement) {
 		Writer:  writer,
 		Url:     url,
 		Date:    date,
+		Images: images,
 	}
 	jsonFileName := fmt.Sprintf("%s.json", title)
 	fileExist, err := doesFileExist(jsonFileName)
