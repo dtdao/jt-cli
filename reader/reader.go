@@ -14,12 +14,12 @@ var articles []Article
 var articleFolder = "./articles"
 
 type Article struct {
-	Title string `json:"Title"`
+	Title   string `json:"Title"`
 	Content string `json:"Content"`
-	Credit string `json:"Credit"`
-	Writer string `json:"Writer"`
-	Url string `json:"Url"`
-	Date string `json:"Date"`
+	Credit  string `json:"Credit"`
+	Writer  string `json:"Writer"`
+	Url     string `json:"Url"`
+	Date    string `json:"Date"`
 }
 
 func Reader() {
@@ -50,11 +50,11 @@ func Reader() {
 	}
 
 	templates := &promptui.SelectTemplates{
-		Label: "{{ . }}?",
+		Label:    "{{ . }}?",
 		Active:   "\U0000261E{{ .Title | cyan }} ({{ .Date | red }})",
 		Inactive: "  {{ .Title | cyan }} ({{ .Date | red }})",
 		Selected: "\U0000261E{{ .Title | red | cyan }}",
-		Details:`
+		Details: `
 --------- Article Details ----------
 {{ "Name:" | faint }}	{{ .Title }}
 {{ "Date:" | faint }}	{{ .Date }}
@@ -62,10 +62,10 @@ func Reader() {
 	}
 
 	prompt := promptui.Select{
-		Label:    "Articles",
-		Items:    articles,
-		Searcher: searcher,
-		Size:     20,
+		Label:     "Articles",
+		Items:     articles,
+		Searcher:  searcher,
+		Size:      20,
 		Templates: templates,
 	}
 
@@ -83,8 +83,10 @@ func Reader() {
 // TODO update searcher for date
 func searcher(input string, index int) bool {
 	article := articles[index]
-	name := strings.Replace(strings.ToLower(article.Title), " ", "", -1)
 	input = strings.Replace(strings.ToLower(input), " ", "", -1)
+	// you can search by date using YYYY-MM-DD format in the input
+	articleSearchableString := fmt.Sprintf("%s%s", article.Title, article.Date)
+	name := strings.Replace(strings.ToLower(articleSearchableString), " ", "", -1)
 	return strings.Contains(name, input)
 }
 
