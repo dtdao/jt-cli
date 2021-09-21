@@ -15,21 +15,23 @@ That extension does work by manipulating the html/scss and removing the "paywall
 ## Features
 - Fast webscrapping using the `Colly` webscrapping framework
 - Simple and intuitive commands
+- Easy to search interface with simple searching by articles are date using the `PromptUI` library.
 - Absolute free!! You never have to pay for any more articles form JapanTimes.
 - All articles scraped will be save locally in an `articles` folder, where you will be able to go back and read through  
 at your own pace.
+
 
 ```bigquery
 Usage:
   jt-cli [command]
 
 Available Commands:
-  articles    List out all the articles
+  get [url]   Given a url to an article, scrape the data.  
+  date        Scrape Japan Times at a particular date [YYYY/MM/DD]
+  reader      Turn on reader mode, allow date and article searching.
+  today       Scape today's articles
   clear       Clear out all scrapped articles
-  date        Scrape Japan Times at a particular date
   help        Help about any command
-  reader      Turn on reader mode
-  today       Get all scrape all articles today
   version     Print the version number of JT-cli tool
 ```
 
@@ -39,5 +41,9 @@ You might have to install Go on your computer and build
 
 `go build`
 
+## Key Dependencies
+ - [Colly](https://github.com/gocolly/colly) 
+ - [Cobra](https://github.com/spf13/cobra) 
+ - [PromptUI](https://github.com/manifoldco/promptui)
 
 
